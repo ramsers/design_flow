@@ -46,4 +46,3 @@ class OTPValidator(serializers.Serializer):
 
         otp_obj.mark_used()
         return attrs
-
