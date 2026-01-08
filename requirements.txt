@@ -1,0 +1,12 @@
+Django>=4.2
+djangorestframework>=3.16
+djangorestframework-simplejwt>=5.5.1
+pymessagebus==1.*
+django-cors-headers>=4.0
+django-filter==25.1
+django-rq==3.1
+mysqlclient>=2.2
+pytest==8.3.2
+pytest-django==4.8.0
+model-bakery==1.18.0
+gunicorn>=21.2.0

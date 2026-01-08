@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  db:
+    image: mysql:8.0.23
+    container_name: design_flow_db
+    restart: always
+    platform: linux/x86_64
+    environment:
+      MYSQL_DATABASE: design_flow
+      MYSQL_USER: design_flow
+      MYSQL_PASSWORD: design_flow
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  web:
+    build: .
+    container_name: design_flow_api.web
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file: .env
+
+
+volumes:
+  mysql_data:
