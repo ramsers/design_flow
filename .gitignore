@@ -1,1 +1,10 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+__pycache__/
+*.py[cod]
+docker-compose.yml
+.idea/
 .env
+/env/
+*.pyc

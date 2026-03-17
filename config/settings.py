@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'apps.user.apps.UserConfig',
     'apps.authenticate.apps.AuthConfig',
+    'apps.email_ingestion.apps.EmailIngestionConfig',
 ]
 
 MIDDLEWARE = [
@@ -100,9 +101,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.environ.get("MYSQL_DATABASE", "design_flow"),
-        "USER": os.environ.get("MYSQL_USER", "design_flow"),
-        "PASSWORD": os.environ.get("MYSQL_PASSWORD", "design_flow"),
+        "NAME": os.environ.get("MYSQL_DATABASE", "ezer"),
+        "USER": os.environ.get("MYSQL_USER", "ezer"),
+        "PASSWORD": os.environ.get("MYSQL_PASSWORD", "ezer"),
         "HOST": os.environ.get("MYSQL_HOST", "db"),
         "PORT": os.environ.get("MYSQL_PORT", "3306"),
         "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},

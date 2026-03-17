@@ -3,13 +3,13 @@ version: '3.9'
 services:
   db:
     image: mysql:8.0.23
-    container_name: design_flow_db
+    container_name: ezer_db
     restart: always
     platform: linux/x86_64
     environment:
-      MYSQL_DATABASE: design_flow
-      MYSQL_USER: design_flow
-      MYSQL_PASSWORD: design_flow
+      MYSQL_DATABASE: ezer
+      MYSQL_USER: ezer
+      MYSQL_PASSWORD: ezer
       MYSQL_ROOT_PASSWORD: root
     ports:
       - "3306:3306"
@@ -18,7 +18,7 @@ services:
 
   web:
     build: .
-    container_name: design_flow_api.web
+    container_name: ezer_api.web
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
