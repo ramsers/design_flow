@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-+mp)bd5v4h0)-4$=os$py%j7i=zis^sv@mss3^x2avl4$yo!@#
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -157,3 +157,4 @@ CORS_ALLOWED_ORIGINS = [
     "https://reforme.onrender.com"
 ]
 AUTH_USER_MODEL = "user.User"
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
