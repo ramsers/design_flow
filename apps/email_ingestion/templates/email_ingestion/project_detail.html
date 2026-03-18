@@ -1,0 +1,131 @@
+{% extends "email_ingestion/base.html" %}
+{% block title %} — {{ project.name }}{% endblock %}
+{% block content %}
+
+<div style="margin-bottom:24px;">
+  <a href="/" class="muted" style="text-decoration:none;">← Projects</a>
+  <h1 style="margin-top:8px;">{{ project.name }}</h1>
+  <p class="muted">{{ project.client_name }} · {{ project.capture_address }}</p>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert {{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<!-- Upload -->
+<div class="card upload-form">
+  <h2>Upload .eml files</h2>
+  <form method="post" enctype="multipart/form-data" action="/projects/{{ project.id }}/upload-view/">
+    {% csrf_token %}
+    <input type="file" name="files" accept=".eml" multiple>
+    <button type="submit" class="btn btn-primary">Upload & Analyze</button>
+  </form>
+</div>
+
+<!-- Checkpoints -->
+<div style="margin-bottom:32px;">
+  <h2>Checkpoints</h2>
+  {% if checkpoints %}
+    {% for cp in checkpoints %}
+    <div class="card">
+      <div class="card-header">
+        <strong>{{ cp.scope_label }}</strong>
+        <span class="badge {{ cp.status }}">{{ cp.status }}</span>
+      </div>
+      {% if cp.snapshot %}
+        <p style="margin-bottom:8px;">{{ cp.snapshot.summary_text }}</p>
+        <p class="muted">
+          Waiting on: <strong>{{ cp.snapshot.waiting_on|default:"—" }}</strong>
+          &nbsp;·&nbsp;
+          Confidence: <span class="badge {{ cp.snapshot.confidence }}">{{ cp.snapshot.confidence }}</span>
+        </p>
+      {% else %}
+        <p class="muted">No snapshot yet.</p>
+      {% endif %}
+
+      {% if cp.artifacts.all %}
+      <details style="margin-top:16px;">
+        <summary class="muted" style="cursor:pointer; font-size:13px;">
+          {{ cp.artifacts.count }} artifact{{ cp.artifacts.count|pluralize }}
+        </summary>
+        <table style="margin-top:12px;">
+          <thead>
+            <tr>
+              <th style="width:32px;"></th>
+              <th>Subject</th>
+              <th>From</th>
+              <th>Received</th>
+              <th>Via</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for artifact in cp.artifacts.all %}
+            <tr style="cursor:pointer;" onclick="toggleMessage('{{ artifact.id }}')">
+              <td>
+                <span id="arrow-{{ artifact.id }}" style="display:inline-block; transition:transform 0.2s; color:#999; font-size:11px;">▶</span>
+              </td>
+              <td>{{ artifact.subject|default:"(no subject)" }}</td>
+              <td>{{ artifact.sender }}</td>
+              <td>{{ artifact.received_at|date:"M d, Y"|default:"—" }}</td>
+              <td>{{ artifact.ingested_via }}</td>
+            </tr>
+            <tr id="msg-{{ artifact.id }}" style="display:none;">
+              <td></td>
+              <td colspan="4">
+                <div style="background:#f9f9f9; border-left:3px solid #e5e5e5; padding:12px 16px; font-size:13px; white-space:pre-wrap; color:#333; line-height:1.6;">{{ artifact.text_content|default:"(no content)" }}</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </details>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">No checkpoints yet. Upload .eml files or forward emails to {{ project.capture_address }}</div>
+  {% endif %}
+</div>
+
+<!-- Unlinked artifacts -->
+{% if unlinked_artifacts %}
+<div>
+  <h2>Unlinked artifacts <span class="muted" style="font-weight:400; font-size:14px;">(not identified as decision points)</span></h2>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32px;"></th>
+          <th>Subject</th>
+          <th>From</th>
+          <th>Received</th>
+          <th>Via</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for artifact in unlinked_artifacts %}
+        <tr style="cursor:pointer;" onclick="toggleMessage('{{ artifact.id }}')">
+          <td>
+            <span id="arrow-{{ artifact.id }}" style="display:inline-block; transition:transform 0.2s; color:#999; font-size:11px;">▶</span>
+          </td>
+          <td>{{ artifact.subject|default:"(no subject)" }}</td>
+          <td>{{ artifact.sender }}</td>
+          <td>{{ artifact.received_at|date:"M d, Y"|default:"—" }}</td>
+          <td>{{ artifact.ingested_via }}</td>
+        </tr>
+        <tr id="msg-{{ artifact.id }}" style="display:none;">
+          <td></td>
+          <td colspan="4">
+            <div style="background:#f9f9f9; border-left:3px solid #e5e5e5; padding:12px 16px; font-size:13px; white-space:pre-wrap; color:#333; line-height:1.6;">{{ artifact.text_content|default:"(no content)" }}</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

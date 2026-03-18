@@ -16,9 +16,12 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from apps.email_ingestion import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("webhooks/", include("apps.email_ingestion.urls")),
-
+    path("", views.project_list, name="project_list"),
+    path("projects/<str:project_id>/", views.project_detail, name="project_detail"),
+    path("projects/<str:project_id>/upload-view/", views.upload_eml_view, name="upload_eml_view")
 ]

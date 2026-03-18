@@ -1,0 +1,31 @@
+{% extends "email_ingestion/base.html" %}
+{% block title %} — Projects{% endblock %}
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <div>
+    <h1>Projects</h1>
+    <p class="muted">All active client projects</p>
+  </div>
+</div>
+
+{% if projects %}
+  {% for project in projects %}
+  <a href="/projects/{{ project.id }}/" style="text-decoration:none; color:inherit;">
+    <div class="card" style="cursor:pointer;">
+      <div class="card-header">
+        <div>
+          <strong>{{ project.name }}</strong>
+          <p class="muted" style="margin-top:4px;">{{ project.client_name }} · {{ project.capture_address }}</p>
+        </div>
+        <div style="text-align:right;">
+          <p class="muted">{{ project.checkpoints.count }} checkpoints</p>
+          <p class="muted">{{ project.artifacts.count }} artifacts</p>
+        </div>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+{% else %}
+  <div class="empty">No projects yet.</div>
+{% endif %}
+{% endblock %}

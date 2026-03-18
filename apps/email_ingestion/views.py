@@ -8,6 +8,8 @@ from .models import Artifact, Project
 from .services import process_project_artifacts
 from .validators import InboundEmailValidator, EmlUploadValidator
 from .parsers import parse_eml
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
 
 logger = logging.getLogger(__name__)
 
@@ -98,3 +100,64 @@ def upload_eml(request, project_id):
         "skipped": skipped,
         "artifact_ids": created_ids,
     })
+
+
+def project_list(request):
+    projects = Project.objects.prefetch_related("checkpoints", "artifacts").order_by("-created_at")
+    return render(request, "email_ingestion/project_list.html", {"projects": projects})
+
+
+def project_detail(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    checkpoints = project.checkpoints.prefetch_related("artifacts", "snapshot").order_by("-created_at")
+    unlinked_artifacts = project.artifacts.filter(checkpoint__isnull=True).order_by("-created_at")
+    return render(request, "email_ingestion/project_detail.html", {
+        "project": project,
+        "checkpoints": checkpoints,
+        "unlinked_artifacts": unlinked_artifacts,
+    })
+
+
+def upload_eml_view(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+
+    if request.method != "POST":
+        return redirect(f"/projects/{project_id}/")
+
+    from .validators import EmlUploadValidator
+    from .parsers import parse_eml
+
+    validator = EmlUploadValidator(data={"files": request.FILES.getlist("files")})
+
+    if not validator.is_valid():
+        messages.error(request, "Invalid files. Please upload .eml files only.")
+        return redirect(f"/projects/{project_id}/")
+
+    files = validator.validated_data["files"]
+    created = 0
+
+    for f in files:
+        raw = f.read()
+        parsed = parse_eml(raw)
+        if not parsed:
+            continue
+        Artifact.objects.create(
+            project=project,
+            kind="email",
+            ingested_via="upload",
+            subject=parsed.get("subject", ""),
+            sender=parsed.get("sender", ""),
+            recipient=parsed.get("recipient", ""),
+            text_content=parsed.get("text_content", ""),
+            metadata=parsed.get("metadata", {}),
+            received_at=parsed.get("received_at"),
+        )
+        created += 1
+
+    if created:
+        process_project_artifacts(str(project.id))
+        messages.success(request, f"{created} file{'s' if created > 1 else ''} uploaded and analyzed.")
+    else:
+        messages.error(request, "No valid .eml files found.")
+
+    return redirect(f"/projects/{project_id}/")
