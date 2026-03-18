@@ -25,3 +25,19 @@ class InboundEmailValidator(serializers.Serializer):
         remapped["sender"] = extract_email(data.get("sender", ""))
         remapped["recipient"] = extract_email(data.get("recipient", ""))
         return super().to_internal_value(remapped)
+
+
+class EmlUploadValidator(serializers.Serializer):
+    files = serializers.ListField(
+        child=serializers.FileField(),
+        min_length=1,
+        max_length=50,
+    )
+
+    def validate_files(self, files):
+        for f in files:
+            if not f.name.endswith(".eml"):
+                raise serializers.ValidationError(
+                    f"{f.name} is not a .eml file."
+                )
+        return files

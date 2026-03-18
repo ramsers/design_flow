@@ -13,6 +13,9 @@ class Project(UUIDModel, TimestampModel):
     def __str__(self):
         return self.name
 
+    class Meta:
+        db_table = "projects"
+
 
 class Checkpoint(UUIDModel, TimestampModel):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="checkpoints")
@@ -25,6 +28,9 @@ class Checkpoint(UUIDModel, TimestampModel):
 
     def __str__(self):
         return f"{self.project.name} — {self.scope_label}"
+
+    class Meta:
+        db_table = "checkpoints"
 
 
 class Artifact(UUIDModel, TimestampModel):
@@ -52,12 +58,16 @@ class Artifact(UUIDModel, TimestampModel):
     def __str__(self):
         return f"{self.kind} — {self.subject or '(no subject)'}"
 
+    class Meta:
+        db_table = "artifacts"
+
 
 class Snapshot(UUIDModel, TimestampModel):
     checkpoint = models.OneToOneField(
         Checkpoint, on_delete=models.CASCADE, related_name="snapshot"
     )
     summary_text = models.TextField()
+    waiting_on = models.CharField(max_length=255, blank=True, default="")
     confidence = models.CharField(
         max_length=10,
         choices=SnapshotConfidence.choices,
@@ -69,3 +79,6 @@ class Snapshot(UUIDModel, TimestampModel):
 
     def __str__(self):
         return f"Snapshot for {self.checkpoint}"
+
+    class Meta:
+        db_table = "snapshots"
