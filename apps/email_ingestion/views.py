@@ -10,6 +10,7 @@ from .validators import InboundEmailValidator, EmlUploadValidator
 from .parsers import parse_eml
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 logger = logging.getLogger(__name__)
 
@@ -102,11 +103,13 @@ def upload_eml(request, project_id):
     })
 
 
+@login_required
 def project_list(request):
     projects = Project.objects.prefetch_related("checkpoints", "artifacts").order_by("-created_at")
     return render(request, "email_ingestion/project_list.html", {"projects": projects})
 
 
+@login_required
 def project_detail(request, project_id):
     project = get_object_or_404(Project, id=project_id)
     checkpoints = project.checkpoints.prefetch_related("artifacts", "snapshot").order_by("-created_at")
@@ -118,6 +121,7 @@ def project_detail(request, project_id):
     })
 
 
+@login_required
 def upload_eml_view(request, project_id):
     project = get_object_or_404(Project, id=project_id)
 

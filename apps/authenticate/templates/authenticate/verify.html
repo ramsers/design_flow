@@ -1,0 +1,30 @@
+{% extends "email_ingestion/base.html" %}
+{% block title %} — Verify{% endblock %}
+{% block content %}
+<div style="max-width:400px; margin:80px auto;">
+  <h1 style="margin-bottom:8px;">Check your email</h1>
+  <p class="muted" style="margin-bottom:32px;">Enter the 6-digit code sent to <strong>{{ email }}</strong>.</p>
+
+  {% if error %}
+    <div class="alert error" style="margin-bottom:16px;">{{ error }}</div>
+  {% endif %}
+
+  <div class="card">
+    <form method="post" action="/auth/verify/">
+      {% csrf_token %}
+      <input type="hidden" name="email" value="{{ email }}">
+      <div style="margin-bottom:16px;">
+        <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">One-time code</label>
+        <input type="text" name="otp" required autofocus maxlength="6"
+          placeholder="000000"
+          style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:24px; letter-spacing:8px; text-align:center;">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Verify</button>
+    </form>
+  </div>
+
+  <p class="muted" style="text-align:center; margin-top:16px;">
+    <a href="/auth/login/" style="color:#666;">Use a different email</a>
+  </p>
+</div>
+{% endblock %}

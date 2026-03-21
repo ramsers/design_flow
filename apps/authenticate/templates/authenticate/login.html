@@ -1,0 +1,24 @@
+{% extends "email_ingestion/base.html" %}
+{% block title %} — Login{% endblock %}
+{% block content %}
+<div style="max-width:400px; margin:80px auto;">
+  <h1 style="margin-bottom:8px;">Sign in to Ezer</h1>
+  <p class="muted" style="margin-bottom:32px;">Enter your email to receive a one-time code.</p>
+
+  {% if error %}
+    <div class="alert error" style="margin-bottom:16px;">{{ error }}</div>
+  {% endif %}
+
+  <div class="card">
+    <form method="post" action="/auth/login/">
+      {% csrf_token %}
+      <div style="margin-bottom:16px;">
+        <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Email</label>
+        <input type="email" name="email" required autofocus
+          style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;">Send code</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,13 +1,14 @@
 import hashlib
 import secrets
-from datetime import timezone, timedelta
-
+from datetime import timedelta
+from django.utils import timezone
 from django.db import models
 
+from apps.shared.models import TimestampModel
 from config import settings
 
 
-class OTPCode(models.Model):
+class OTPCode(TimestampModel):
     PURPOSE_LOGIN = "login"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="otp_codes")
@@ -21,8 +22,9 @@ class OTPCode(models.Model):
     failed_attempts = models.PositiveSmallIntegerField(default=0)
     max_attempts = models.PositiveSmallIntegerField(default=5)
 
-
     class Meta:
+        db_table = "otp_codes"
+        ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["user", "purpose", "expires_at"]),
             models.Index(fields=["user", "purpose", "used_at"]),
@@ -58,7 +60,3 @@ class OTPCode(models.Model):
     def mark_used(self):
         self.used_at = timezone.now()
         self.save(update_fields=["used_at"])
-
-    class Meta:
-        ordering = ['-created_at']
-        db_table = "otp_codes"

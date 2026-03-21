@@ -158,3 +158,4 @@ CORS_ALLOWED_ORIGINS = [
 ]
 AUTH_USER_MODEL = "user.User"
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+LOGIN_URL = "/auth/login/"
