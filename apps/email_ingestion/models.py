@@ -80,6 +80,7 @@ class Artifact(UUIDModel, TimestampModel):
     checkpoint = models.ForeignKey(
         Checkpoint, on_delete=models.SET_NULL, null=True, blank=True, related_name="artifacts"
     )
+    thread_id = models.UUIDField(null=True, blank=True, db_index=True)
     kind = models.CharField(
         max_length=20,
         choices=ArtifactKind.choices,

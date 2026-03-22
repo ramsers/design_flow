@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -34,6 +35,7 @@ def inbound_email(request):
 
     Artifact.objects.create(
         project=project,
+        thread_id=uuid.uuid4(),
         kind="email",
         ingested_via="forward",
         subject=data.get("subject", ""),
@@ -49,7 +51,6 @@ def inbound_email(request):
     )
 
     process_project_artifacts(str(project.id))
-
     return JsonResponse({"status": "ok"})
 
 
@@ -183,30 +184,39 @@ def upload_eml_view(request, project_id):
 
     files = validator.validated_data["files"]
     created = 0
+    skipped = []
 
     for f in files:
         raw = f.read()
-        parsed = parse_eml(raw)
-        if not parsed:
+        parsed_messages = parse_eml(raw)
+
+        if not parsed_messages:
+            skipped.append(f.name)
             continue
-        Artifact.objects.create(
-            project=project,
-            kind="email",
-            ingested_via="upload",
-            subject=parsed.get("subject", ""),
-            sender=parsed.get("sender", ""),
-            recipient=parsed.get("recipient", ""),
-            text_content=parsed.get("text_content", ""),
-            metadata=parsed.get("metadata", {}),
-            received_at=parsed.get("received_at"),
-        )
-        created += 1
+
+        # All messages from the same file share a thread_id
+        thread_id = uuid.uuid4()
+
+        for parsed in parsed_messages:
+            Artifact.objects.create(
+                project=project,
+                thread_id=thread_id,
+                kind="email",
+                ingested_via="upload",
+                subject=parsed.get("subject", ""),
+                sender=parsed.get("sender", ""),
+                recipient=parsed.get("recipient", ""),
+                text_content=parsed.get("text_content", ""),
+                metadata=parsed.get("metadata", {}),
+                received_at=parsed.get("received_at"),
+            )
+            created += 1
 
     if created:
         process_project_artifacts(str(project.id))
-        messages.success(request, f"{created} file{'s' if created > 1 else ''} uploaded and analyzed.")
+        messages.success(request, f"{created} email{'s' if created > 1 else ''} uploaded and analyzed.")
     else:
-        messages.error(request, "No valid .eml files found.")
+        messages.error(request, f"No valid emails found. {len(skipped)} file(s) skipped.")
 
     return redirect(f"/projects/{project_id}/")
 
