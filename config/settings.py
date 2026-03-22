@@ -159,3 +159,6 @@ CORS_ALLOWED_ORIGINS = [
 AUTH_USER_MODEL = "user.User"
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 LOGIN_URL = "/auth/login/"
+MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY", "")
+MAILGUN_DOMAIN = os.environ.get("MAILGUN_DOMAIN", "")
+MAILGUN_FROM = os.environ.get("MAILGUN_FROM", "")

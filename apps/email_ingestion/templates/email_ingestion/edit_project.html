@@ -1,0 +1,161 @@
+{% extends "email_ingestion/base.html" %}
+{% block title %} — Edit {{ project.name }}{% endblock %}
+{% block content %}
+
+<div style="max-width:640px; margin:0 auto;">
+  <a href="/projects/{{ project.id }}/" class="muted" style="text-decoration:none;">← {{ project.name }}</a>
+  <h1 style="margin-top:8px; margin-bottom:24px;">Edit Project</h1>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert {{ message.tags }}" style="margin-bottom:16px;">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Project details -->
+  <div class="card" style="margin-bottom:24px;">
+    <h2 style="margin-bottom:20px;">Project details</h2>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_project">
+
+      <div style="margin-bottom:16px;">
+        <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Project name</label>
+        <input type="text" name="name" value="{{ project.name }}" required
+          style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div>
+          <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Project #</label>
+          <input type="text" name="project_number" value="{{ project.project_number }}"
+            placeholder="e.g. 2026-042"
+            style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+        </div>
+        <div>
+          <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Square footage</label>
+          <input type="number" name="sqft" value="{{ project.sqft|default:'' }}"
+            placeholder="e.g. 2400"
+            style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Address</label>
+        <input type="text" name="address" value="{{ project.address }}"
+          placeholder="e.g. 123 Main St, Toronto, ON"
+          style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px;">
+        <div>
+          <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Client name</label>
+          <input type="text" name="client_name" value="{{ project.client_name }}" required
+            style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+        </div>
+        <div>
+          <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Client email</label>
+          <input type="email" name="client_email" value="{{ project.client_email }}"
+            style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Save changes</button>
+    </form>
+  </div>
+
+  <!-- Capture address -->
+  <div class="card" style="margin-bottom:24px;">
+    <h2 style="margin-bottom:8px;">Email capture address</h2>
+    <p class="muted" style="margin-bottom:12px;">Forward client emails to this address to capture them automatically.</p>
+    <div style="background:#f5f5f0; border:1px solid #e5e5e5; border-radius:6px; padding:12px 16px; font-family:monospace; font-size:14px; display:flex; align-items:center; justify-content:space-between;">
+      <span>{{ project.capture_address }}</span>
+      <button onclick="navigator.clipboard.writeText('{{ project.capture_address }}'); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)"
+        class="btn btn-secondary" style="font-size:12px; padding:4px 10px;">Copy</button>
+    </div>
+  </div>
+
+  <!-- Stakeholders -->
+  <div class="card">
+    <h2 style="margin-bottom:20px;">Stakeholders</h2>
+
+    {% if stakeholders %}
+    <table style="margin-bottom:24px;">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Email</th>
+          <th>Company</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sh in stakeholders %}
+        <tr>
+          <td><strong>{{ sh.name }}</strong></td>
+          <td>{{ sh.role|default:"—" }}</td>
+          <td>{{ sh.email|default:"—" }}</td>
+          <td>{{ sh.company|default:"—" }}</td>
+          <td>
+            <form method="post" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="remove_stakeholder">
+              <input type="hidden" name="stakeholder_id" value="{{ sh.id }}">
+              <button type="submit" style="background:none; border:none; color:#999; cursor:pointer; font-size:13px;">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="muted" style="margin-bottom:24px;">No stakeholders yet.</p>
+    {% endif %}
+
+    <!-- Add stakeholder form -->
+    <div style="border-top:1px solid #f0f0f0; padding-top:20px;">
+      <h3 style="font-size:15px; font-weight:500; margin-bottom:16px;">Add stakeholder</h3>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_stakeholder">
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="display:block; font-size:13px; font-weight:500; margin-bottom:4px;">Name *</label>
+            <input type="text" name="sh_name" required placeholder="e.g. Simon Germaine"
+              style="width:100%; padding:8px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+          </div>
+          <div>
+            <label style="display:block; font-size:13px; font-weight:500; margin-bottom:4px;">Role</label>
+            <input type="text" name="sh_role" placeholder="e.g. General Contractor"
+              style="width:100%; padding:8px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="display:block; font-size:13px; font-weight:500; margin-bottom:4px;">Email</label>
+            <input type="email" name="sh_email" placeholder="e.g. simon@germaine.com"
+              style="width:100%; padding:8px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+          </div>
+          <div>
+            <label style="display:block; font-size:13px; font-weight:500; margin-bottom:4px;">Phone</label>
+            <input type="text" name="sh_phone" placeholder="e.g. 416-555-0100"
+              style="width:100%; padding:8px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-size:13px; font-weight:500; margin-bottom:4px;">Company</label>
+          <input type="text" name="sh_company" placeholder="e.g. Germaine Construction"
+            style="width:100%; padding:8px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Add stakeholder</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

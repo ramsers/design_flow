@@ -4,8 +4,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .models import Artifact, Project
-from .services import process_project_artifacts
+from .models import Artifact, Project, ProjectMembership
+from .services import process_project_artifacts, generate_capture_address
 from .validators import InboundEmailValidator, EmlUploadValidator
 from .parsers import parse_eml
 from django.shortcuts import render, get_object_or_404, redirect
@@ -105,13 +105,15 @@ def upload_eml(request, project_id):
 
 @login_required
 def project_list(request):
-    projects = Project.objects.prefetch_related("checkpoints", "artifacts").order_by("-created_at")
+    projects = Project.objects.filter(
+        memberships__user=request.user
+    ).prefetch_related("checkpoints", "artifacts").order_by("-created_at")
     return render(request, "email_ingestion/project_list.html", {"projects": projects})
 
 
 @login_required
 def project_detail(request, project_id):
-    project = get_object_or_404(Project, id=project_id)
+    project = get_object_or_404(Project, id=project_id, memberships__user=request.user)
     checkpoints = project.checkpoints.prefetch_related("artifacts", "snapshot").order_by("-created_at")
     unlinked_artifacts = project.artifacts.filter(checkpoint__isnull=True).order_by("-created_at")
     return render(request, "email_ingestion/project_detail.html", {
@@ -120,16 +122,58 @@ def project_detail(request, project_id):
         "unlinked_artifacts": unlinked_artifacts,
     })
 
+@login_required
+def create_project(request):
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        client_name = request.POST.get("client_name", "").strip()
+        client_email = request.POST.get("client_email", "").strip()
+        address = request.POST.get("address", "").strip()
+        project_number = request.POST.get("project_number", "").strip()
+        sqft = request.POST.get("sqft", "").strip()
+
+        if not name or not client_name:
+            return render(request, "email_ingestion/create_project.html", {
+                "error": "Project name and client name are required.",
+                "name": name,
+                "client_name": client_name,
+                "client_email": client_email,
+                "address": address,
+                "project_number": project_number,
+                "sqft": sqft,
+            })
+
+        capture_address = generate_capture_address(name)
+
+        project = Project.objects.create(
+            name=name,
+            client_name=client_name,
+            client_email=client_email,
+            capture_address=capture_address,
+            address=address,
+            project_number=project_number,
+            sqft=int(sqft) if sqft.isdigit() else None,
+        )
+
+        ProjectMembership.objects.create(
+            project=project,
+            user=request.user,
+            role="owner",
+        )
+
+        return redirect(f"/projects/{project.id}/")
+
+    return render(request, "email_ingestion/create_project.html")
+
 
 @login_required
 def upload_eml_view(request, project_id):
-    project = get_object_or_404(Project, id=project_id)
+    project = get_object_or_404(Project, id=project_id, memberships__user=request.user)
 
     if request.method != "POST":
         return redirect(f"/projects/{project_id}/")
 
     from .validators import EmlUploadValidator
-    from .parsers import parse_eml
 
     validator = EmlUploadValidator(data={"files": request.FILES.getlist("files")})
 
@@ -165,3 +209,53 @@ def upload_eml_view(request, project_id):
         messages.error(request, "No valid .eml files found.")
 
     return redirect(f"/projects/{project_id}/")
+
+
+@login_required
+def edit_project(request, project_id):
+    project = get_object_or_404(Project, id=project_id, memberships__user=request.user)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # ── Save project details ──────────────────────────────
+        if action == "save_project":
+            project.name = request.POST.get("name", "").strip() or project.name
+            project.client_name = request.POST.get("client_name", "").strip() or project.client_name
+            project.client_email = request.POST.get("client_email", "").strip()
+            project.address = request.POST.get("address", "").strip()
+            project.project_number = request.POST.get("project_number", "").strip()
+            sqft = request.POST.get("sqft", "").strip()
+            project.sqft = int(sqft) if sqft.isdigit() else None
+            project.save()
+            messages.success(request, "Project updated.")
+            return redirect(f"/projects/{project_id}/edit/")
+
+        # ── Add stakeholder ───────────────────────────────────
+        elif action == "add_stakeholder":
+            name = request.POST.get("sh_name", "").strip()
+            if name:
+                from .models import ProjectStakeholder
+                ProjectStakeholder.objects.create(
+                    project=project,
+                    name=name,
+                    role=request.POST.get("sh_role", "").strip(),
+                    email=request.POST.get("sh_email", "").strip(),
+                    phone=request.POST.get("sh_phone", "").strip(),
+                    company=request.POST.get("sh_company", "").strip(),
+                )
+                messages.success(request, f"{name} added.")
+            return redirect(f"/projects/{project_id}/edit/")
+
+        # ── Remove stakeholder ────────────────────────────────
+        elif action == "remove_stakeholder":
+            from .models import ProjectStakeholder
+            sh_id = request.POST.get("stakeholder_id")
+            ProjectStakeholder.objects.filter(id=sh_id, project=project).delete()
+            return redirect(f"/projects/{project_id}/edit/")
+
+    stakeholders = project.stakeholders.all()
+    return render(request, "email_ingestion/edit_project.html", {
+        "project": project,
+        "stakeholders": stakeholders,
+    })

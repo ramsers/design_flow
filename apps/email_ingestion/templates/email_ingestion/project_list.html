@@ -6,26 +6,38 @@
     <h1>Projects</h1>
     <p class="muted">All active client projects</p>
   </div>
+  <a href="/projects/create/" class="btn btn-primary">+ New Project</a>
 </div>
 
 {% if projects %}
   {% for project in projects %}
   <a href="/projects/{{ project.id }}/" style="text-decoration:none; color:inherit;">
-    <div class="card" style="cursor:pointer;">
-      <div class="card-header">
+    <div class="card" style="cursor:pointer; margin-bottom:12px;">
+      <div class="card-header" style="margin-bottom:8px;">
         <div>
-          <strong>{{ project.name }}</strong>
-          <p class="muted" style="margin-top:4px;">{{ project.client_name }} · {{ project.capture_address }}</p>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;">
+            <strong style="font-size:16px;">{{ project.name }}</strong>
+            {% if project.project_number %}
+              <span class="muted" style="font-size:13px;">— #{{ project.project_number }}</span>
+            {% else %}
+              <span class="muted" style="font-size:13px;">— Project #:</span>
+            {% endif %}
+          </div>
+          <p class="muted" style="margin-bottom:6px;">{{ project.client_name }} · {{ project.capture_address }}</p>
+          <div style="display:flex; gap:24px;">
+            <span class="muted" style="font-size:13px;">Address: {{ project.address }}</span>
+            <span class="muted" style="font-size:13px;">SQFT: {{ project.sqft }}</span>
+          </div>
         </div>
-        <div style="text-align:right;">
-          <p class="muted">{{ project.checkpoints.count }} checkpoints</p>
-          <p class="muted">{{ project.artifacts.count }} artifacts</p>
+        <div style="text-align:right; flex-shrink:0;">
+          <p class="muted">{{ project.checkpoints.count }} checkpoint{{ project.checkpoints.count|pluralize }}</p>
+          <p class="muted">{{ project.artifacts.count }} artifact{{ project.artifacts.count|pluralize }}</p>
         </div>
       </div>
     </div>
   </a>
   {% endfor %}
 {% else %}
-  <div class="empty">No projects yet.</div>
+  <div class="empty">No projects yet. Create your first project to get started.</div>
 {% endif %}
 {% endblock %}

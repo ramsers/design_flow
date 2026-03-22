@@ -1,20 +1,62 @@
 from django.db import models
+from django.conf import settings
 
 from apps.shared.models import UUIDModel, TimestampModel
 from .value_objects import ArtifactKind, CheckpointStatus, IngestedVia, SnapshotConfidence
 
 
+
 class Project(UUIDModel, TimestampModel):
     name = models.CharField(max_length=255)
+    project_number = models.CharField(max_length=50, blank=True)
     client_name = models.CharField(max_length=255)
     client_email = models.EmailField(blank=True)
     capture_address = models.EmailField(unique=True)
+    address = models.CharField(max_length=500, blank=True)
+    sqft = models.PositiveIntegerField(null=True, blank=True)
+    members = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        through="ProjectMembership",
+        related_name="projects",
+    )
 
     def __str__(self):
         return self.name
 
     class Meta:
         db_table = "projects"
+
+
+class ProjectStakeholder(UUIDModel, TimestampModel):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="stakeholders")
+    name = models.CharField(max_length=255)
+    role = models.CharField(max_length=100, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+    company = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        db_table = "project_stakeholders"
+
+    def __str__(self):
+        return f"{self.name} ({self.role}) — {self.project.name}"
+
+
+class ProjectMembership(UUIDModel, TimestampModel):
+    ROLE_CHOICES = [
+        ("owner", "Owner"),
+        ("member", "Member"),
+    ]
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="memberships")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="memberships")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="member")
+
+    class Meta:
+        db_table = "project_memberships"
+        unique_together = ("project", "user")
+
+    def __str__(self):
+        return f"{self.user} — {self.project.name} ({self.role})"
 
 
 class Checkpoint(UUIDModel, TimestampModel):
@@ -68,14 +110,8 @@ class Snapshot(UUIDModel, TimestampModel):
     )
     summary_text = models.TextField()
     waiting_on = models.CharField(max_length=255, blank=True, default="")
-    confidence = models.CharField(
-        max_length=10,
-        choices=SnapshotConfidence.choices,
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=CheckpointStatus.choices,
-    )
+    confidence = models.CharField(max_length=10, choices=SnapshotConfidence.choices)
+    status = models.CharField(max_length=20, choices=CheckpointStatus.choices)
 
     def __str__(self):
         return f"Snapshot for {self.checkpoint}"

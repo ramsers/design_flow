@@ -23,6 +23,8 @@ urlpatterns = [
     path("webhooks/", include("apps.email_ingestion.urls")),
     path("auth/", include("apps.authenticate.urls")),
     path("", views.project_list, name="project_list"),
+    path("projects/create/", views.create_project, name="create_project"),
     path("projects/<str:project_id>/", views.project_detail, name="project_detail"),
+    path("projects/<str:project_id>/edit/", views.edit_project, name="edit_project"),
     path("projects/<str:project_id>/upload-view/", views.upload_eml_view, name="upload_eml_view")
 ]

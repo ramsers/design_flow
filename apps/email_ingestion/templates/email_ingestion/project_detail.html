@@ -2,10 +2,13 @@
 {% block title %} — {{ project.name }}{% endblock %}
 {% block content %}
 
-<div style="margin-bottom:24px;">
-  <a href="/" class="muted" style="text-decoration:none;">← Projects</a>
-  <h1 style="margin-top:8px;">{{ project.name }}</h1>
-  <p class="muted">{{ project.client_name }} · {{ project.capture_address }}</p>
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+  <div>
+    <a href="/" class="muted" style="text-decoration:none;">← Projects</a>
+    <h1 style="margin-top:8px;">{{ project.name }}</h1>
+    <p class="muted">{{ project.client_name }} · {{ project.capture_address }}</p>
+  </div>
+  <a href="/projects/{{ project.id }}/edit/" class="btn">Edit project</a>
 </div>
 
 {% if messages %}

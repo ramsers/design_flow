@@ -1,13 +1,26 @@
 import json
 import logging
+import os
 
 import anthropic
 from django.conf import settings
 
 from .models import Artifact, Checkpoint, Project
 from .value_objects import CheckpointStatus, SnapshotConfidence
-
+import re
+import uuid
 logger = logging.getLogger(__name__)
+
+
+
+def generate_capture_address(project_name: str) -> str:
+    slug = re.sub(r"[^a-z0-9]", "-", project_name.lower()).strip("-")
+    slug = re.sub(r"-+", "-", slug)[:40]
+    domain = os.environ.get("MAILGUN_DOMAIN")
+    base = f"{slug}@{domain}"
+    if Project.objects.filter(capture_address=base).exists():
+        base = f"{slug}-{str(uuid.uuid4())[:4]}@{domain}"
+    return base
 
 
 def infer_checkpoints(project_id: str) -> list:

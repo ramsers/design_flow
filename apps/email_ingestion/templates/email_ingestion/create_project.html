@@ -1,0 +1,67 @@
+{% extends "email_ingestion/base.html" %}
+{% block title %} — New Project{% endblock %}
+{% block content %}
+
+<div style="max-width:520px; margin:0 auto;">
+  <a href="/" class="muted" style="text-decoration:none;">← Projects</a>
+  <h1 style="margin-top:8px; margin-bottom:24px;">New Project</h1>
+
+  {% if error %}
+    <div class="alert error" style="margin-bottom:16px;">{{ error }}</div>
+  {% endif %}
+
+  <div class="card">
+    <form method="post" action="/projects/create/">
+      {% csrf_token %}
+
+      <div style="margin-bottom:16px;">
+        <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Project name</label>
+        <input type="text" name="name" value="{{ name|default:'' }}" required autofocus
+          placeholder="e.g. Smith Condo Renovation"
+          style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+        <div>
+          <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Project #</label>
+          <input type="text" name="project_number" value="{{ project_number|default:'' }}"
+            placeholder="e.g. 2026-042"
+            style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+        </div>
+        <div>
+          <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Square footage</label>
+          <input type="number" name="sqft" value="{{ sqft|default:'' }}"
+            placeholder="e.g. 2400"
+            style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Project address</label>
+        <input type="text" name="address" value="{{ address|default:'' }}"
+          placeholder="e.g. 123 Main St, Toronto, ON"
+          style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">Client name</label>
+        <input type="text" name="client_name" value="{{ client_name|default:'' }}" required
+          placeholder="e.g. Sarah Smith"
+          style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <label style="display:block; font-size:14px; font-weight:500; margin-bottom:6px;">
+          Client email <span class="muted">(optional)</span>
+        </label>
+        <input type="email" name="client_email" value="{{ client_email|default:'' }}"
+          placeholder="e.g. sarah@gmail.com"
+          style="width:100%; padding:10px 12px; border:1px solid #e5e5e5; border-radius:6px; font-size:14px;">
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;">Create project</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
